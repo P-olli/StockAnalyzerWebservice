@@ -2,6 +2,7 @@ package de.olli.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.collect.Lists;
 import de.olli.model.Price;
 import de.olli.model.Stock;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,8 +48,9 @@ public class StockService {
                 ObjectMapper mapper = new ObjectMapper();
                 stockList.add(mapper.readValue(stream, Stock.class));
                 stockList.forEach(stock -> {
-                    stock.setMovingAverage38(calculateMovingAverage(stock, 38));
-                    stock.setMovingAverage100(calculateMovingAverage(stock, 100));
+                    stock.setMovingAverage38(calculateAllPossibleMovingAverages(stock.getPrices(), 38));
+                    stock.setMovingAverage100(calculateAllPossibleMovingAverages(stock.getPrices(), 100));
+                    stock.setMovingAverage200(calculateAllPossibleMovingAverages(stock.getPrices(), 200));
                 });
             } catch (IOException e) {
                 e.printStackTrace();
@@ -61,17 +63,25 @@ public class StockService {
     }
 
     @VisibleForTesting
-    private Stock getStockFromApi(String url, String stockName) {
+    protected Stock getStockFromApi(String url, String stockName) {
         Stock stock = restTemplate.getForObject(url, Stock.class, stockName);
-        stock.setMovingAverage38(calculateMovingAverage(stock, 38));
-        stock.setMovingAverage100(calculateMovingAverage(stock, 100));
+        stock.setMovingAverage38(calculateAllPossibleMovingAverages(stock.getPrices(), 38));
+        stock.setMovingAverage100(calculateAllPossibleMovingAverages(stock.getPrices(), 100));
+        stock.setMovingAverage200(calculateAllPossibleMovingAverages(stock.getPrices(), 200));
         return stock;
     }
 
     @VisibleForTesting
-    private Double calculateMovingAverage(Stock stock, int period) {
-        int min = Math.min(period, stock.getPrices().size());
-        return stock.getPrices().parallelStream().limit(min).mapToDouble(Price::getPrice).average().getAsDouble();
+    protected Double calculateMovingAverage(List<Price> prices) {
+        return prices.parallelStream().mapToDouble(Price::getPrice).average().getAsDouble();
+    }
+
+    protected List<Double> calculateAllPossibleMovingAverages(List<Price> prices, int period) {
+        List<Double> allPossibleMovingAverages = Lists.newArrayList();
+        for (int i = prices.size(); i > 0; i--) {
+            allPossibleMovingAverages.add(0, calculateMovingAverage(prices.subList((i - period) >= 0 ? i - period : 0, i)));
+        }
+        return allPossibleMovingAverages;
     }
 
 }
