@@ -12,8 +12,6 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
-import org.supercsv.io.CsvBeanReader;
-import org.supercsv.io.CsvListReader;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
