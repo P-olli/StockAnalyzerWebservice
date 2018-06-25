@@ -2,13 +2,11 @@ package de.olli.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormat;
-import org.joda.time.format.DateTimeFormatter;
 
-import java.text.DateFormat;
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -21,9 +19,7 @@ public class Stock {
     private List<Double> movingAverage38;
     private List<Double> movingAverage100;
     private List<Double> movingAverage200;
-    private List<Price> prices = new ArrayList<>();
-    @JsonIgnore
-    private DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+    private List<Price> prices = new LinkedList<>();
 
     @JsonProperty("Meta Data")
     private void setId(Map<String, String> metadata) {
@@ -33,14 +29,9 @@ public class Stock {
     @JsonProperty("Time Series (Daily)")
     private void setPrices(Map<String, Map<String, String>> prices) {
         prices.entrySet().forEach(entry -> {
-            DateTime date;
-            if (entry.getKey().contains(" ")) {
-                DateTimeFormatter dateTimeFormatter = DateTimeFormat.forPattern("yyyy-MM-dd HH:mm:ss");
-                date = dateTimeFormatter.parseDateTime(entry.getKey());
-            } else {
-                date = DateTime.parse(entry.getKey());
-            }
-            this.prices.add(new Price(date.toDate(), Double.parseDouble(entry.getValue().get("4. close"))));
+            LocalDateTime date;
+            date = LocalDateTime.from(DateTimeFormatter.ISO_LOCAL_DATE_TIME.parse(entry.getKey()));
+            this.prices.add(new Price(entry.getKey(), date, Double.parseDouble(entry.getValue().get("4. close"))));
         });
     }
 
@@ -49,9 +40,19 @@ public class Stock {
         return id;
     }
 
+    @JsonIgnore
+    public void setId(String id) {
+        this.id = id;
+    }
+
     @JsonProperty("Prices")
     public List<Price> getPrices() {
         return this.prices;
+    }
+
+    @JsonIgnore
+    public void addPrice(Price price) {
+        this.prices.add(price);
     }
 
     @JsonProperty("MovingAverage38")

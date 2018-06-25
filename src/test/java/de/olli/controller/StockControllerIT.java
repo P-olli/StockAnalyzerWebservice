@@ -1,6 +1,7 @@
 package de.olli.controller;
 
 import de.olli.model.Stock;
+import de.olli.repository.StocksElasticsearchRepository;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,10 +24,13 @@ public class StockControllerIT {
 
     @Autowired
     private TestRestTemplate testRestTemplate;
+    @Autowired
+    private StocksElasticsearchRepository repo;
 
     @Test
     public void testGetStocksLocal() throws Exception {
         Stock[] stocks = testRestTemplate.getForObject("/stocks/NDX1.DE,AAPL", Stock[].class);
         assertThat(stocks).hasSize(2);
+        assertThat(repo.streamPriceByStockId("NDX1.DE").count()).isEqualTo(100);
     }
 }

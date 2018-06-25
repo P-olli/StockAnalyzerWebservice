@@ -11,6 +11,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @ActiveProfiles("offline")
-public class StockServiceTest {
+public class StockServiceIT {
 
     @Autowired
     private StockService stockService;
@@ -36,12 +37,12 @@ public class StockServiceTest {
     @Test
     public void movingAverageCalculationReturnsAverageOfLastValues() throws Exception {
         ArrayList<Price> prices = Lists.newArrayList();
-        prices.add(new Price(DateTime.now().toDate(), new Double(1)));
-        prices.add(new Price(DateTime.now().toDate(), new Double(2)));
-        prices.add(new Price(DateTime.now().toDate(), new Double(3)));
-        prices.add(new Price(DateTime.now().toDate(), new Double(4)));
-        prices.add(new Price(DateTime.now().toDate(), new Double(5)));
-        prices.add(new Price(DateTime.now().toDate(), new Double(6)));
+        prices.add(new Price("NDX1.DE", LocalDateTime.now(), new Double(1)));
+        prices.add(new Price("NDX1.DE", LocalDateTime.now(), new Double(2)));
+        prices.add(new Price("NDX1.DE", LocalDateTime.now(), new Double(3)));
+        prices.add(new Price("NDX1.DE", LocalDateTime.now(), new Double(4)));
+        prices.add(new Price("NDX1.DE", LocalDateTime.now(), new Double(5)));
+        prices.add(new Price("NDX1.DE", LocalDateTime.now(), new Double(6)));
         List<Double> average = stockService.calculateAllPossibleMovingAverages(prices, 2);
         assertThat(average).hasSize(6);
         assertThat(average.get(0)).isEqualTo(1);
