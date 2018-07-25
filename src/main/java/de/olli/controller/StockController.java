@@ -1,14 +1,12 @@
 package de.olli.controller;
 
-import de.olli.model.Stock;
+import de.olli.model.Price;
 import de.olli.service.StockService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
+import reactor.core.publisher.Flux;
 
 /**
  * Created by olli on 18.04.2017.
@@ -19,8 +17,8 @@ public class StockController {
     @Autowired
     private StockService stockService;
 
-    @RequestMapping("/stocks/{stockNames:.+}")
-    public List<Stock> getStocks(@PathVariable List<String> stockNames) {
-        return stockService.getStocks(stockNames);
+    @GetMapping("/stocks/{stockId}")
+    public Flux<Price> getStocks(@PathVariable String stockId) {
+        return stockService.getStock(stockId);
     }
 }

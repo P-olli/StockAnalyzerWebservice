@@ -1,11 +1,11 @@
 package de.olli.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -30,8 +30,12 @@ public class Stock {
     private void setPrices(Map<String, Map<String, String>> prices) {
         prices.entrySet().forEach(entry -> {
             LocalDateTime date;
-            date = LocalDateTime.from(DateTimeFormatter.ISO_LOCAL_DATE_TIME.parse(entry.getKey()));
-            this.prices.add(new Price(entry.getKey(), date, Double.parseDouble(entry.getValue().get("4. close"))));
+            if ((entry.getKey().contains(" "))) {
+                date = LocalDateTime.parse(entry.getKey().replace(' ', 'T'));
+            } else {
+                date = LocalDate.parse(entry.getKey()).atTime(18, 0);
+            }
+            this.prices.add(new Price(this.getId(), date, Double.parseDouble(entry.getValue().get("4. close"))));
         });
     }
 
@@ -46,6 +50,7 @@ public class Stock {
     }
 
     @JsonProperty("Prices")
+    @JsonFormat(shape = JsonFormat.Shape.ARRAY)
     public List<Price> getPrices() {
         return this.prices;
     }
@@ -56,6 +61,7 @@ public class Stock {
     }
 
     @JsonProperty("MovingAverage38")
+    @JsonFormat(shape = JsonFormat.Shape.ARRAY)
     public List<Double> getMovingAverage38() {
         return movingAverage38;
     }
@@ -66,6 +72,7 @@ public class Stock {
     }
 
     @JsonProperty("MovingAverage100")
+    @JsonFormat(shape = JsonFormat.Shape.ARRAY)
     public List<Double> getMovingAverage100() {
         return movingAverage100;
     }
@@ -76,6 +83,7 @@ public class Stock {
     }
 
     @JsonProperty("MovingAverage200")
+    @JsonFormat(shape = JsonFormat.Shape.ARRAY)
     public List<Double> getMovingAverage200() {
         return movingAverage200;
     }
