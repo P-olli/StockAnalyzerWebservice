@@ -2,9 +2,8 @@ package de.olli.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
-import de.olli.model.Stock;
-import de.olli.repository.StocksMongoDBReactiveRepository;
-import org.assertj.core.util.VisibleForTesting;
+import de.olli.model.dto.PriceDto;
+import de.olli.model.dto.StockDto;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
@@ -22,38 +21,51 @@ import java.util.function.Predicate;
 public class StockDataRetriever {
 
     private String stockUrlDaily;
-    private String stockUrlFull;
+    private String stockUrlIntraday;
+    private String apiKey;
     private WebClient webClient;
     private Environment environment;
 
     @Autowired
-    public StockDataRetriever(@Value("${stock.url.daily}") String aplhaUrl, @Value("${api.key}") String apikey,
+    public StockDataRetriever(@Value("${stock.url.daily}") String aplhaUrl, @Value("${stock.url.intraday}") String aplhaUrlIntraday, @Value("${api.key}") String apikey,
                         WebClient webClient, Environment environment) {
-        this.stockUrlDaily = aplhaUrl + apikey;
-        this.stockUrlFull = this.stockUrlDaily + "&outputsize=full";
+        this.stockUrlDaily = aplhaUrl;
+        this.stockUrlIntraday = aplhaUrlIntraday;
+        this.apiKey = apikey;
         this.webClient = webClient;
         this.environment = environment;
     }
 
-    @VisibleForTesting
-    public Mono<Stock> getStockFromApi(String stockName, boolean full) {
+    public Mono<StockDto> getStockFromApi(String stockName, boolean full) {
         if (Arrays.stream(environment.getActiveProfiles()).anyMatch(Predicate.isEqual("offline"))) {
             try {
                 InputStream stream = ClassLoader.getSystemResourceAsStream("mock_data.json");
 
                 ObjectMapper mapper = new ObjectMapper();
-                Stock stock = mapper.readValue(stream, Stock.class);
-                return Mono.just(stock);
+                StockDto stockDto = mapper.readValue(stream, StockDto.class);
+                return Mono.just(stockDto);
             } catch (IOException e) {
                 e.printStackTrace();
-                return null;
+                return Mono.empty();
             }
         } else {
-            return webClient.mutate().baseUrl(full ? stockUrlFull : stockUrlDaily).defaultUriVariables(ImmutableMap.of("stockId", stockName)).build()
+            return webClient.mutate().baseUrl(stockUrlDaily).defaultUriVariables(
+                    ImmutableMap.of("stockId", stockName,"outputSize", full ? "full" : "minimal", "apiKey", apiKey)
+                ).build()
                     .get()
                     .accept(MediaType.APPLICATION_JSON)
                     .retrieve()
-                    .bodyToMono(Stock.class);
+                    .bodyToMono(StockDto.class);
         }
+    }
+
+    public Mono<PriceDto> getLatestPriceFromApi(String stockName) {
+        return webClient.mutate().baseUrl(stockUrlIntraday).defaultUriVariables(
+                ImmutableMap.of("stockId", stockName, "apiKey", apiKey)
+            ).build()
+                .get()
+                .accept(MediaType.APPLICATION_JSON)
+                .retrieve()
+                .bodyToMono(PriceDto.class);
     }
 }
